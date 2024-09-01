@@ -8,8 +8,14 @@ const PORT = 5000;
 
 app.use(fileUpload());
 
+// בדוק אם התיקייה public קיימת, אם לא - צור אותה
+const publicDir = path.join(__dirname, 'public');
+if (!fs.existsSync(publicDir)){
+    fs.mkdirSync(publicDir);
+}
+
 // הגדרת תיקיית public כסטטית
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(publicDir));
 
 app.post('/save-excel', (req, res) => {
   if (!req.files || Object.keys(req.files).length === 0) {
@@ -17,7 +23,7 @@ app.post('/save-excel', (req, res) => {
   }
 
   const excelFile = req.files.file;
-  const savePath = path.join(__dirname, 'public', 'Codes.xlsx');
+  const savePath = path.join(publicDir, 'Codes.xlsx');
 
   excelFile.mv(savePath, (err) => {
     if (err) {
@@ -25,13 +31,19 @@ app.post('/save-excel', (req, res) => {
       return res.status(500).send(err);
     }
 
+    console.log('Excel file saved successfully at', savePath);
     res.send('Excel file saved successfully!');
   });
 });
 
 app.get('/get-excel', (req, res) => {
-  const filePath = path.join(__dirname, 'public', 'Codes.xlsx');
-  res.download(filePath);
+  const filePath = path.join(publicDir, 'Codes.xlsx');
+  res.download(filePath, (err) => {
+    if (err) {
+      console.error('Error downloading Excel file:', err);
+      res.status(500).send(err);
+    }
+  });
 });
 
 app.listen(PORT, () => {

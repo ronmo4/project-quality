@@ -4,8 +4,10 @@ import { applyFilters } from './filterFunctions';
 import Filter from './Filter';
 import Table from './Table';
 
+const years = [2017, 2018, 2019, 2020, 2021];
+
 function HomeScreen() {
-  const { data, columns } = useExcelData(); // השתמש בפונקציה המעודכנת
+  const { data, columns } = useExcelData('/CODES.xlsx');
   const [searchValue, setSearchValue] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
@@ -35,8 +37,6 @@ function HomeScreen() {
   useEffect(() => {
     if (data.length > 0) {
       createUniqueLists(data, columns);
-    } else {
-      console.error('No data loaded from Excel file.');
     }
   }, [data, columns, createUniqueLists]);
 
@@ -49,9 +49,9 @@ function HomeScreen() {
   }, [searchValue, locationFilter, yearFilter, sectorFilter, regionFilter, ethicalValuesFilter, filterData]);
 
   const handleRowClick = (row) => {
-    const link = row[row.length - 1];
+    const link = row[row.length - 1]; // הקישור יהיה בעמודה האחרונה
     if (link && link.startsWith('http')) {
-      window.open(link, '_blank');
+      window.open(link, '_blank'); // פתיחת הקישור בדפדפן
     } else {
       const id = row[0]; 
       const filePath = `${process.env.PUBLIC_URL}/AllCodes/${id}.pdf`;
@@ -76,7 +76,7 @@ function HomeScreen() {
         ethicalValuesFilter={ethicalValuesFilter}
         setEthicalValuesFilter={setEthicalValuesFilter}
         locations={locations}
-        years={[2017, 2018, 2019, 2020, 2021]}
+        years={years}
         sectors={sectors}
         regions={regions}
         ethicalValues={ethicalValues}
