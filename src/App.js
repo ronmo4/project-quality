@@ -7,11 +7,11 @@ import { useExcelData } from './components/useExcelData';
 import * as XLSX from 'xlsx';
 
 function App() {
-  const { data, columns, setData } = useExcelData('/get-excel');  // השתמש בנקודת הקצה של השרת
+  const { data, columns, setData } = useExcelData('https://ai-ethics-client.onrender.com/Codes.xlsx');  // URL מרוחק
 
-  const uniqueLocations = [...new Set(data.slice(1).map(row => row[5]).filter(location => location))];
-  const uniqueSectors = [...new Set(data.slice(1).map(row => row[3]).filter(sector => sector))];
-  const uniqueRegions = [...new Set(data.slice(1).map(row => row[6]).filter(region => region))];
+  const uniqueLocations = [...new Set(data.map(row => row[5]).filter(location => location))];
+  const uniqueSectors = [...new Set(data.map(row => row[3]).filter(sector => sector))];
+  const uniqueRegions = [...new Set(data.map(row => row[6]).filter(region => region))];
   const ethicalColumns = columns.slice(7);
 
   const handleAddRow = async (newRow) => {
@@ -37,7 +37,7 @@ function App() {
     formData.append('file', blob, 'Codes.xlsx');
 
     try {
-      const response = await fetch('https://ai-ethics-server.onrender.com/save-excel', {
+      const response = await fetch('https://ai-ethics-client.onrender.com/save-excel', {
         method: 'POST',
         body: formData
       });
@@ -87,5 +87,3 @@ function App() {
 }
 
 export default App;
-
- 
