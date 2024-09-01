@@ -7,7 +7,7 @@ import { useExcelData } from './components/useExcelData';
 import * as XLSX from 'xlsx';
 
 function App() {
-  const { data, columns, setData } = useExcelData('/CODES.xlsx'); 
+  const { data, columns, setData } = useExcelData('/get-excel');  // השתמש בנקודת הקצה של השרת
 
   const uniqueLocations = [...new Set(data.slice(1).map(row => row[5]).filter(location => location))];
   const uniqueSectors = [...new Set(data.slice(1).map(row => row[3]).filter(sector => sector))];
@@ -29,11 +29,10 @@ function App() {
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
 
-    // יצירת Blob מהקובץ
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
 
-    // שליחת הנתונים לשרת לשמירה
+    // שליחת הקובץ המעודכן לשרת
     const formData = new FormData();
     formData.append('file', blob, 'Codes.xlsx');
 
@@ -42,7 +41,7 @@ function App() {
         method: 'POST',
         body: formData
       });
-      
+
       if (response.ok) {
         console.log('Excel file saved successfully on the server!');
       } else {
@@ -57,7 +56,7 @@ function App() {
     <Router>
       <div className="App">
         <header className="App-header">
-          <h1>AI ברוכים הבאים לאתר קודים אתיים ב</h1>
+          <h1>ברוכים הבאים לאתר קודים אתיים ב-AI</h1>
           <div className="button-container">
             <Link to="/PartA">
               <button className="main-button">חיפוש בקובץ</button>
@@ -88,3 +87,5 @@ function App() {
 }
 
 export default App;
+
+ 

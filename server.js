@@ -29,6 +29,11 @@ app.post('/save-excel', (req, res) => {
   });
 });
 
+app.get('/get-excel', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'Codes.xlsx');
+  res.download(filePath);
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
