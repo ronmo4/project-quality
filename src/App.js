@@ -18,6 +18,8 @@ function App() {
     const lastId = data.length > 1 ? parseInt(data[data.length - 1][0]) : 0; 
     newRow[0] = lastId + 1; 
     const updatedData = [...data, newRow];
+    
+    // עדכון המידע המקומי כדי שהרשימה תתעדכן מיידית
     setData(updatedData);
 
     const workbook = XLSX.utils.book_new();
@@ -37,13 +39,14 @@ function App() {
     formData.append('file', blob, 'Codes.xlsx');
 
     try {
-      const response = await fetch('https://ai-ethics-server.onrender.com/save-excel', { 
+      const response = await fetch('https://ai-ethics-server.onrender.com/save-excel', { // שינוי URL לשרת הנכון
         method: 'POST',
         body: formData
       });
-  
+
       if (response.ok) {
         console.log('Excel file saved successfully on the server!');
+        // אין צורך לקרוא ל-loadExcelData, פשוט נשתמש בנתונים המעודכנים
       } else {
         console.error('Failed to save Excel file on the server.');
       }
