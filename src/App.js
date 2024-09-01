@@ -7,13 +7,15 @@ import { useExcelData } from './components/useExcelData';
 import * as XLSX from 'xlsx';
 
 function App() {
-  const { data, columns, setData, loadExcelData } = useExcelData('https://ai-ethics-client.onrender.com/Codes.xlsx');  // URL מרוחק
+  const { data, columns, setData, reloadExcelData } = useExcelData('https://ai-ethics-client.onrender.com/Codes.xlsx');
 
+  // יצירת רשימות ייחודיות מתוך הנתונים
   const uniqueLocations = [...new Set(data.map(row => row[5]).filter(location => location))];
   const uniqueSectors = [...new Set(data.map(row => row[3]).filter(sector => sector))];
   const uniqueRegions = [...new Set(data.map(row => row[6]).filter(region => region))];
   const ethicalColumns = columns.slice(7);
 
+  // פונקציה להוספת שורה
   const handleAddRow = async (newRow) => {
     const lastId = data.length > 1 ? parseInt(data[data.length - 1][0]) : 0; 
     newRow[0] = lastId + 1; 
@@ -25,9 +27,6 @@ function App() {
     const worksheetData = [columns, ...updatedData];
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
 
-    worksheet['!cols'] = [];
-    worksheet['!cols'][4] = { rtl: true };
-
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -37,14 +36,14 @@ function App() {
     formData.append('file', blob, 'Codes.xlsx');
 
     try {
-      const response = await fetch('https://ai-ethics-server.onrender.com/save-excel', { // URL לשרת
+      const response = await fetch('https://ai-ethics-server.onrender.com/save-excel', {
         method: 'POST',
         body: formData
       });
 
       if (response.ok) {
         console.log('Excel file saved successfully on the server!');
-        await loadExcelData();  // טוען מחדש את הנתונים לאחר השמירה
+        await reloadExcelData(); 
       } else {
         console.error('Failed to save Excel file on the server.');
       }
@@ -57,7 +56,7 @@ function App() {
     <Router>
       <div className="App">
         <header className="App-header">
-          <h1>ברוכים הבאים לאתר קודים אתיים ב-AI</h1>
+          <h1>AI ברוכים הבאים לאתר קודים אתיים ב</h1>
           <div className="button-container">
             <Link to="/PartA">
               <button className="main-button">חיפוש בקובץ</button>
