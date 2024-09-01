@@ -7,7 +7,7 @@ import { useExcelData } from './components/useExcelData';
 import * as XLSX from 'xlsx';
 
 function App() {
-  const { data, columns, setData } = useExcelData('https://ai-ethics-client.onrender.com/Codes.xlsx');  // URL מרוחק
+  const { data, columns, setData, loadExcelData } = useExcelData('https://ai-ethics-client.onrender.com/Codes.xlsx');  // URL מרוחק
 
   const uniqueLocations = [...new Set(data.map(row => row[5]).filter(location => location))];
   const uniqueSectors = [...new Set(data.map(row => row[3]).filter(sector => sector))];
@@ -19,7 +19,6 @@ function App() {
     newRow[0] = lastId + 1; 
     const updatedData = [...data, newRow];
     
-    // עדכון המידע המקומי כדי שהרשימה תתעדכן מיידית
     setData(updatedData);
 
     const workbook = XLSX.utils.book_new();
@@ -34,19 +33,18 @@ function App() {
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
 
-    // שליחת הקובץ המעודכן לשרת
     const formData = new FormData();
     formData.append('file', blob, 'Codes.xlsx');
 
     try {
-      const response = await fetch('https://ai-ethics-server.onrender.com/save-excel', { // שינוי URL לשרת הנכון
+      const response = await fetch('https://ai-ethics-server.onrender.com/save-excel', { // URL לשרת
         method: 'POST',
         body: formData
       });
 
       if (response.ok) {
         console.log('Excel file saved successfully on the server!');
-        // אין צורך לקרוא ל-loadExcelData, פשוט נשתמש בנתונים המעודכנים
+        await loadExcelData();  // טוען מחדש את הנתונים לאחר השמירה
       } else {
         console.error('Failed to save Excel file on the server.');
       }
