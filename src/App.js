@@ -37,11 +37,11 @@ function App() {
     formData.append('file', blob, 'Codes.xlsx');
 
     try {
-      const response = await fetch('https://ai-ethics-client.onrender.com/save-excel', {
+      const response = await fetch('https://ai-ethics-server.onrender.com/save-excel', { 
         method: 'POST',
         body: formData
       });
-
+  
       if (response.ok) {
         console.log('Excel file saved successfully on the server!');
       } else {
