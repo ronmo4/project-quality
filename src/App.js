@@ -1,54 +1,58 @@
-import React from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import './App.css';
 import HomeScreen from './components/PartA';
 import PartB from './components/PartB';
-import { useExcelData } from './components/useExcelData'; 
 import * as XLSX from 'xlsx';
 
 function App() {
-  const { data, columns, setData, reloadExcelData } = useExcelData('https://ai-ethics-client.onrender.com/Codes.xlsx');
+  const [data, setData] = useState([]); // אחסון כל הנתונים כאן
+  const [columns, setColumns] = useState([]); // אחסון כותרות העמודות
 
-  // יצירת רשימות ייחודיות מתוך הנתונים
+  useEffect(() => {
+    // קריאה ל-API לטעינת הנתונים מהשרת
+    const fetchExcelData = async () => {
+      try {
+        const response = await fetch('https://ai-ethics-server.onrender.com/api/excel-data'); // קריאת GET לשרת
+        const result = await response.json();
+        const jsonData = result.data;
+
+        setColumns(jsonData[0]); // הכותרות
+        setData(jsonData.slice(1)); // הנתונים
+
+      } catch (error) {
+        console.error('Error loading excel file:', error);
+      }
+    };
+
+    fetchExcelData();
+  }, []);
+
   const uniqueLocations = [...new Set(data.map(row => row[5]).filter(location => location))];
   const uniqueSectors = [...new Set(data.map(row => row[3]).filter(sector => sector))];
   const uniqueRegions = [...new Set(data.map(row => row[6]).filter(region => region))];
   const ethicalColumns = columns.slice(7);
 
-  // פונקציה להוספת שורה
   const handleAddRow = async (newRow) => {
     const lastId = data.length > 1 ? parseInt(data[data.length - 1][0]) : 0; 
     newRow[0] = lastId + 1; 
     const updatedData = [...data, newRow];
-    
     setData(updatedData);
 
-    const workbook = XLSX.utils.book_new();
-    const worksheetData = [columns, ...updatedData];
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-
-    const formData = new FormData();
-    formData.append('file', blob, 'Codes.xlsx');
-
     try {
-      const response = await fetch('https://ai-ethics-server.onrender.com/save-excel', {
+      const response = await fetch('https://ai-ethics-server.onrender.com/api/update-excel', {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: [newRow] })
       });
 
-      if (response.ok) {
-        console.log('Excel file saved successfully on the server!');
-        await reloadExcelData(); 
-      } else {
-        console.error('Failed to save Excel file on the server.');
+      if (!response.ok) {
+        throw new Error('Failed to update Excel file');
       }
+
+      console.log('Excel file updated successfully on server.');
     } catch (error) {
-      console.error('Error saving Excel file:', error);
+      console.error('Error updating Excel data:', error);
     }
   };
 
@@ -71,7 +75,6 @@ function App() {
           <Route path="/PartB" element={
             <PartB 
               onAddRow={handleAddRow} 
-              data={data}
               locations={uniqueLocations}
               years={[2017, 2018, 2019, 2020, 2021]}
               sectors={uniqueSectors}

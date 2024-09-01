@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddForm from './AddForm';
 
-function PartB({ onAddRow, locations, years, sectors, regions, ethicalValues, columns }) {
+function PartB({ onAddRow, columns }) {
+  const [data, setData] = useState([]); 
+  const [locations, setLocations] = useState([]);
+  const [years, setYears] = useState([]);
+  const [sectors, setSectors] = useState([]);
+  const [regions, setRegions] = useState([]);
+  const [ethicalValues, setEthicalValues] = useState([]);
   const [entityName, setEntityName] = useState('');
   const [documentName, setDocumentName] = useState('');
   const [year, setYear] = useState('');
@@ -9,16 +15,46 @@ function PartB({ onAddRow, locations, years, sectors, regions, ethicalValues, co
   const [region, setRegion] = useState('');
   const [sector, setSector] = useState('');
   const [ethicalValuesFilter, setEthicalValuesFilter] = useState([]);
-  const [link, setLink] = useState(''); // שדה חדש להוספת קישור
+  const [link, setLink] = useState('');
   const [showAlert, setShowAlert] = useState(false);
 
-  const handleAddNewRow = () => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://ai-ethics-server.onrender.com/api/excel-data');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const result = await response.json();
+        const jsonData = result.data;
+
+        const formattedData = jsonData.slice(1).map(row => {
+          return columns.reduce((acc, col, index) => {
+            acc[col] = row[index] || '';
+            return acc;
+          }, {});
+        });
+
+        setData(formattedData);
+        setLocations([...new Set(formattedData.map(row => row.Location).filter(location => location))]);
+        setYears([...new Set(formattedData.map(row => row.Year).filter(year => year))]);
+        setSectors([...new Set(formattedData.map(row => row.Sector).filter(sector => sector))]);
+        setRegions([...new Set(formattedData.map(row => row.Region).filter(region => region))]);
+        setEthicalValues(columns.slice(7));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, [columns]);
+
+  const handleAddNewRow = async () => {
     if (!entityName || !documentName || !year || !location || !region || !sector || ethicalValuesFilter.length === 0) {
       setShowAlert(true);
       return;
     }
-
-    // יצירת מערך חדש עם כל העמודות הנדרשות
+  
     const newRow = new Array(columns.length).fill('');
     newRow[1] = entityName;
     newRow[2] = documentName;
@@ -26,18 +62,34 @@ function PartB({ onAddRow, locations, years, sectors, regions, ethicalValues, co
     newRow[4] = year;
     newRow[5] = location;
     newRow[6] = region;
-    if (link) newRow.push(link); // הוספת הקישור אם הוזן
-
+    if (link) newRow.push(link);
+  
     ethicalValuesFilter.forEach(value => {
       const columnIndex = columns.indexOf(value);
       if (columnIndex > -1) {
         newRow[columnIndex] = 'X';
       }
     });
-
-    onAddRow(newRow);
-    resetForm();
+  
+    try {
+      const response = await fetch('https://ai-ethics-server.onrender.com/api/update-excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: [newRow] })
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to update Excel file');
+      }
+  
+      const newDataWithId = await response.json(); // קבל את השורה החדשה עם ה-ID מהשרת
+      setData(prevData => [...prevData, newDataWithId]); // הוספת השורה עם ה-ID המתקבל
+      resetForm();
+    } catch (error) {
+      console.error('Error updating Excel data:', error);
+    }
   };
+  
 
   const resetForm = () => {
     setEntityName('');
@@ -47,7 +99,7 @@ function PartB({ onAddRow, locations, years, sectors, regions, ethicalValues, co
     setRegion('');
     setSector('');
     setEthicalValuesFilter([]);
-    setLink(''); // איפוס שדה הקישור
+    setLink('');
   };
 
   return (
