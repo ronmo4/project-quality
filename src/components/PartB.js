@@ -1,5 +1,3 @@
-// PartB.js
-
 import React, { useState, useEffect } from 'react';
 import AddForm from './AddForm';
 
@@ -65,7 +63,7 @@ function PartB({ onAddRow, columns }) {
     newRow[4] = year;
     newRow[5] = location;
     newRow[6] = region;
-    if (link) newRow.push(link);
+    if (link) newRow.push(link); // מוסיף את הלינק אם קיים
 
     ethicalValuesFilter.forEach(value => {
       const columnIndex = columns.indexOf(value);
@@ -104,7 +102,7 @@ function PartB({ onAddRow, columns }) {
 
         const uploadResult = await uploadResponse.json();
         if (uploadResult.fileUrl) {
-          newRow.push(uploadResult.fileUrl); // הוספת כתובת ה-URL לנתונים
+          newRow.push(uploadResult.fileUrl); // הוספת הקישור ל-PDF אם קיים
           setData(prevData => [...prevData, { ...newRow, pdfUrl: uploadResult.fileUrl }]);
         }
       }
