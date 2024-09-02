@@ -20,18 +20,19 @@ function PartA() {
   const [regions, setRegions] = useState([]);
   const [ethicalValues, setEthicalValues] = useState([]);
 
+  // שימוש ב-useEffect כדי לטעון את הנתונים מהשרת
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://ai-ethics-server.onrender.com/api/excel-data');
+        const response = await fetch('https://ai-ethics-server.onrender.com/api/excel-data'); // קריאת GET לשרת
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
         const result = await response.json();
         const jsonData = result.data;
 
-        setColumns(jsonData[0]);
-        setData(jsonData.slice(1));
+        setColumns(jsonData[0]); // הכותרות
+        setData(jsonData.slice(1)); // הנתונים
         createUniqueLists(jsonData.slice(1), jsonData[0]);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -64,16 +65,15 @@ function PartA() {
   }, [searchValue, locationFilter, yearFilter, sectorFilter, regionFilter, ethicalValuesFilter, filterData]);
 
   const handleRowClick = (row) => {
-    const link = row[row.length - 1]; // מניחים שהקישור או כתובת ה-PDF נמצא בעמודה האחרונה
+    const link = row[row.length - 1];
     if (link && link.startsWith('http')) {
-      window.open(link, '_blank'); // פתיחת קישור בטאב חדש אם הוא מתחיל ב-http
+      window.open(link, '_blank');
     } else {
       const id = row[0]; 
-      const filePath = `https://ai-ethics-client.onrender.com/AllCodes/${id}.pdf`; // שימוש בכתובת ה-URL המתאימה
-      window.open(filePath, '_blank'); // פתיחת קובץ PDF מהשרת בטאב חדש
+      const filePath = `${process.env.PUBLIC_URL}/AllCodes/${id}.pdf`;
+      window.open(filePath, '_blank');
     }
   };
-  
 
   return (
     <div className="home-screen">

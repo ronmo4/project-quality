@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AddForm from './AddForm';
 
 function PartB({ onAddRow, columns }) {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState([]); 
   const [locations, setLocations] = useState([]);
   const [years, setYears] = useState([]);
   const [sectors, setSectors] = useState([]);
@@ -16,7 +16,6 @@ function PartB({ onAddRow, columns }) {
   const [sector, setSector] = useState('');
   const [ethicalValuesFilter, setEthicalValuesFilter] = useState([]);
   const [link, setLink] = useState('');
-  const [pdfFile, setPdfFile] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
@@ -55,7 +54,7 @@ function PartB({ onAddRow, columns }) {
       setShowAlert(true);
       return;
     }
-
+  
     const newRow = new Array(columns.length).fill('');
     newRow[1] = entityName;
     newRow[2] = documentName;
@@ -63,55 +62,34 @@ function PartB({ onAddRow, columns }) {
     newRow[4] = year;
     newRow[5] = location;
     newRow[6] = region;
-    if (link) newRow.push(link); // מוסיף את הלינק אם קיים
-
+    if (link) newRow.push(link);
+  
     ethicalValuesFilter.forEach(value => {
       const columnIndex = columns.indexOf(value);
       if (columnIndex > -1) {
         newRow[columnIndex] = 'X';
       }
     });
-
+  
     try {
       const response = await fetch('https://ai-ethics-server.onrender.com/api/update-excel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: [newRow] })
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to update Excel file');
       }
-
-      const newDataWithId = await response.json();
-      setData(prevData => [...prevData, newDataWithId]);
-
-      if (pdfFile) {
-        const formData = new FormData();
-        formData.append('file', pdfFile);
-        formData.append('id', newDataWithId[0]);
-
-        const uploadResponse = await fetch('https://ai-ethics-server.onrender.com/api/upload-pdf', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload PDF');
-        }
-
-        const uploadResult = await uploadResponse.json();
-        if (uploadResult.fileUrl) {
-          newRow.push(uploadResult.fileUrl); // הוספת הקישור ל-PDF אם קיים
-          setData(prevData => [...prevData, { ...newRow, pdfUrl: uploadResult.fileUrl }]);
-        }
-      }
-
+  
+      const newDataWithId = await response.json(); // קבל את השורה החדשה עם ה-ID מהשרת
+      setData(prevData => [...prevData, newDataWithId]); // הוספת השורה עם ה-ID המתקבל
       resetForm();
     } catch (error) {
       console.error('Error updating Excel data:', error);
     }
   };
+  
 
   const resetForm = () => {
     setEntityName('');
@@ -122,21 +100,6 @@ function PartB({ onAddRow, columns }) {
     setSector('');
     setEthicalValuesFilter([]);
     setLink('');
-    setPdfFile(null);
-  };
-
-  const handleLinkChange = (e) => {
-    setLink(e.target.value);
-    if (e.target.value) {
-      setPdfFile(null); // מנקה את הבחירה בקובץ אם מזינים לינק
-    }
-  };
-
-  const handleFileChange = (e) => {
-    setPdfFile(e.target.files[0]);
-    if (e.target.files[0]) {
-      setLink(''); // מנקה את הזן קישור אם נבחר קובץ
-    }
   };
 
   return (
@@ -169,26 +132,14 @@ function PartB({ onAddRow, columns }) {
         regions={regions}
         ethicalValues={ethicalValues}
       />
-      <div className="input-container">
-        <input
-          type="text"
-          placeholder="Add Link (optional)"
-          value={link}
-          onChange={handleLinkChange}
-          className="search-input"
-          disabled={!!pdfFile} // הופך לשדה בלתי ניתן להקלדה אם נבחר קובץ
-        />
-        <input
-          type="file"
-          accept="application/pdf"
-          onChange={handleFileChange}
-          className="file-input"
-          disabled={!!link} // הופך לכפתור בלתי אפשרי ללחיצה אם מוזן לינק
-        />
-      </div>
-      <div className="button-container">
-        <button onClick={handleAddNewRow} className="add-button">הוסף נתונים</button>
-      </div>
+      <input
+        type="text"
+        placeholder="Add Link (optional)"
+        value={link}
+        onChange={(e) => setLink(e.target.value)}
+        className="search-input"
+      />
+      <button onClick={handleAddNewRow} className="add-button">הוסף נתונים</button>
     </div>
   );
 }
