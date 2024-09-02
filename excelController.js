@@ -1,5 +1,3 @@
-// excelController.js
-
 const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
@@ -61,6 +59,7 @@ exports.updateExcelData = (req, res) => {
   }
 };
 
+// פונקציה להעלאת קובץ PDF ולשמור את כתובת ה-URL ב-Excel
 exports.uploadPdf = (req, res) => {
   if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).send('No files were uploaded.');
@@ -76,14 +75,37 @@ exports.uploadPdf = (req, res) => {
     fs.mkdirSync(pdfDirectory, { recursive: true });
   }
 
-  pdfFile.mv(uploadPath, (err) => {
+  pdfFile.mv(uploadPath, async (err) => {
     if (err) {
       console.error('Error uploading PDF file:', err);
       return res.status(500).send('Error uploading PDF file');
     }
 
-    // השתמש בכתובת הלקוח במקום כתובת השרת
+    // יצירת URL ל-PDF שנשמר בשרת הלקוח
     const fileUrl = `https://ai-ethics-client.onrender.com/AllCodes/${uniqueFileName}`;
-    res.json({ message: 'PDF file uploaded successfully', fileUrl });
+
+    try {
+      // קריאת קובץ ה-Excel
+      const workbook = XLSX.readFile(excelFilePath);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // חיפוש השורה המתאימה לפי ה-ID ועדכון ה-URL
+      const rowToUpdate = jsonData.find(row => row[0] == id);
+      if (rowToUpdate) {
+        rowToUpdate.push(fileUrl);
+      }
+
+      const updatedWorksheet = XLSX.utils.aoa_to_sheet(jsonData);
+      workbook.Sheets[sheetName] = updatedWorksheet;
+      XLSX.writeFile(workbook, excelFilePath);
+
+      res.json({ message: 'PDF file uploaded successfully', fileUrl });
+    } catch (error) {
+      console.error('Error updating Excel file with PDF URL:', error);
+      res.status(500).send('Error updating Excel file with PDF URL');
+    }
   });
 };

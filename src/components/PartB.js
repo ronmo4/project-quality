@@ -105,6 +105,7 @@ function PartB({ onAddRow, columns }) {
         const uploadResult = await uploadResponse.json();
         if (uploadResult.fileUrl) {
           newRow.push(uploadResult.fileUrl); // הוספת כתובת ה-URL לנתונים
+          setData(prevData => [...prevData, { ...newRow, pdfUrl: uploadResult.fileUrl }]);
         }
       }
 
