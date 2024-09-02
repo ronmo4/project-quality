@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fileUpload = require('express-fileupload');
-const path = require('path'); // יש לוודא שייבוא path נכון
+const path = require('path'); // לוודא שייבוא path נכון
 
 const { getExcelData, updateExcelData, uploadPdf } = require('./excelController');
 

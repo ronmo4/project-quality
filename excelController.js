@@ -75,6 +75,8 @@ exports.uploadPdf = (req, res) => {
     fs.mkdirSync(pdfDirectory, { recursive: true });
   }
 
+  console.log('Saving file to:', uploadPath); // Log path to see where the file is being saved
+
   pdfFile.mv(uploadPath, async (err) => {
     if (err) {
       console.error('Error uploading PDF file:', err);
@@ -101,6 +103,8 @@ exports.uploadPdf = (req, res) => {
       const updatedWorksheet = XLSX.utils.aoa_to_sheet(jsonData);
       workbook.Sheets[sheetName] = updatedWorksheet;
       XLSX.writeFile(workbook, excelFilePath);
+
+      console.log('PDF file uploaded and URL saved to Excel:', fileUrl); // Log file URL
 
       res.json({ message: 'PDF file uploaded successfully', fileUrl });
     } catch (error) {
