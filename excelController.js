@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
+const { v4: uuidv4 } = require('uuid'); // ייבוא ספריית UUID ליצירת שמות קבצים ייחודיים
 
 // נתיב לקובץ Excel
 const excelFilePath = path.join(__dirname, 'public', 'Codes.xlsx');
 
-const pdfDirectory = path.join(__dirname, 'public', 'AllCodes'); // נתיב לתיקיית שמירת קבצי ה-PDF
+const pdfDirectory = 'AllCodes'; // שימוש בנתיב יחסי, או שתוכל להשתמש בנתיב מחושב שמבוסס על משתני סביבה
 
 // פונקציה לקריאת נתונים מקובץ Excel
 exports.getExcelData = (req, res) => {
@@ -57,6 +58,7 @@ exports.updateExcelData = (req, res) => {
     res.status(500).send('Error updating Excel file');
   }
 };
+
 exports.uploadPdf = (req, res) => {
   if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).send('No files were uploaded.');
@@ -64,7 +66,12 @@ exports.uploadPdf = (req, res) => {
 
   const pdfFile = req.files.file;
   const id = req.body.id; // נקבל את ה-ID מהבקשה
-  const uploadPath = path.join(pdfDirectory, `${id}.pdf`);
+
+  // יצירת שם ייחודי לקובץ PDF
+  const uniqueFileName = `${id}-${uuidv4()}.pdf`;
+
+  // נתיב הקובץ לשמירה בספריה הנוכחית (או שתשנה ל-S3 / GCS וכו')
+  const uploadPath = path.join(pdfDirectory, uniqueFileName);
 
   pdfFile.mv(uploadPath, (err) => {
     if (err) {
