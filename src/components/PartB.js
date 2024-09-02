@@ -1,8 +1,10 @@
+// PartB.js
+
 import React, { useState, useEffect } from 'react';
 import AddForm from './AddForm';
 
 function PartB({ onAddRow, columns }) {
-  const [data, setData] = useState([]); 
+  const [data, setData] = useState([]);
   const [locations, setLocations] = useState([]);
   const [years, setYears] = useState([]);
   const [sectors, setSectors] = useState([]);
@@ -55,7 +57,7 @@ function PartB({ onAddRow, columns }) {
       setShowAlert(true);
       return;
     }
-  
+
     const newRow = new Array(columns.length).fill('');
     newRow[1] = entityName;
     newRow[2] = documentName;
@@ -64,37 +66,46 @@ function PartB({ onAddRow, columns }) {
     newRow[5] = location;
     newRow[6] = region;
     if (link) newRow.push(link);
-  
+
     ethicalValuesFilter.forEach(value => {
       const columnIndex = columns.indexOf(value);
       if (columnIndex > -1) {
         newRow[columnIndex] = 'X';
       }
     });
-  
+
     try {
       const response = await fetch('https://ai-ethics-server.onrender.com/api/update-excel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: [newRow] })
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to update Excel file');
       }
-  
-      const newDataWithId = await response.json(); 
-      setData(prevData => [...prevData, newDataWithId]); 
-  
+
+      const newDataWithId = await response.json();
+      setData(prevData => [...prevData, newDataWithId]);
+
       if (pdfFile) {
         const formData = new FormData();
         formData.append('file', pdfFile);
         formData.append('id', newDataWithId[0]);
 
-        await fetch('https://ai-ethics-server.onrender.com/api/upload-pdf', {
+        const uploadResponse = await fetch('https://ai-ethics-server.onrender.com/api/upload-pdf', {
           method: 'POST',
           body: formData
         });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload PDF');
+        }
+
+        const uploadResult = await uploadResponse.json();
+        if (uploadResult.fileUrl) {
+          newRow.push(uploadResult.fileUrl); // הוספת כתובת ה-URL לנתונים
+        }
       }
 
       resetForm();
