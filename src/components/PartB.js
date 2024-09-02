@@ -16,6 +16,7 @@ function PartB({ onAddRow, columns }) {
   const [sector, setSector] = useState('');
   const [ethicalValuesFilter, setEthicalValuesFilter] = useState([]);
   const [link, setLink] = useState('');
+  const [pdfFile, setPdfFile] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
@@ -82,14 +83,25 @@ function PartB({ onAddRow, columns }) {
         throw new Error('Failed to update Excel file');
       }
   
-      const newDataWithId = await response.json(); // קבל את השורה החדשה עם ה-ID מהשרת
-      setData(prevData => [...prevData, newDataWithId]); // הוספת השורה עם ה-ID המתקבל
+      const newDataWithId = await response.json(); 
+      setData(prevData => [...prevData, newDataWithId]); 
+  
+      if (pdfFile) {
+        const formData = new FormData();
+        formData.append('file', pdfFile);
+        formData.append('id', newDataWithId[0]);
+
+        await fetch('https://ai-ethics-server.onrender.com/api/upload-pdf', {
+          method: 'POST',
+          body: formData
+        });
+      }
+
       resetForm();
     } catch (error) {
       console.error('Error updating Excel data:', error);
     }
   };
-  
 
   const resetForm = () => {
     setEntityName('');
@@ -100,6 +112,21 @@ function PartB({ onAddRow, columns }) {
     setSector('');
     setEthicalValuesFilter([]);
     setLink('');
+    setPdfFile(null);
+  };
+
+  const handleLinkChange = (e) => {
+    setLink(e.target.value);
+    if (e.target.value) {
+      setPdfFile(null); // מנקה את הבחירה בקובץ אם מזינים לינק
+    }
+  };
+
+  const handleFileChange = (e) => {
+    setPdfFile(e.target.files[0]);
+    if (e.target.files[0]) {
+      setLink(''); // מנקה את הזן קישור אם נבחר קובץ
+    }
   };
 
   return (
@@ -132,14 +159,26 @@ function PartB({ onAddRow, columns }) {
         regions={regions}
         ethicalValues={ethicalValues}
       />
-      <input
-        type="text"
-        placeholder="Add Link (optional)"
-        value={link}
-        onChange={(e) => setLink(e.target.value)}
-        className="search-input"
-      />
-      <button onClick={handleAddNewRow} className="add-button">הוסף נתונים</button>
+      <div className="input-container">
+        <input
+          type="text"
+          placeholder="Add Link (optional)"
+          value={link}
+          onChange={handleLinkChange}
+          className="search-input"
+          disabled={!!pdfFile} // הופך לשדה בלתי ניתן להקלדה אם נבחר קובץ
+        />
+        <input
+          type="file"
+          accept="application/pdf"
+          onChange={handleFileChange}
+          className="file-input"
+          disabled={!!link} // הופך לכפתור בלתי אפשרי ללחיצה אם מוזן לינק
+        />
+      </div>
+      <div className="button-container">
+        <button onClick={handleAddNewRow} className="add-button">הוסף נתונים</button>
+      </div>
     </div>
   );
 }

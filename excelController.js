@@ -2,7 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
 
+// נתיב לקובץ Excel
 const excelFilePath = path.join(__dirname, 'public', 'Codes.xlsx');
+
+const pdfDirectory = path.join(__dirname, 'public', 'AllCodes'); // נתיב לתיקיית שמירת קבצי ה-PDF
 
 // פונקציה לקריאת נתונים מקובץ Excel
 exports.getExcelData = (req, res) => {
@@ -53,4 +56,22 @@ exports.updateExcelData = (req, res) => {
     console.error('Error updating Excel file:', error);
     res.status(500).send('Error updating Excel file');
   }
+};
+exports.uploadPdf = (req, res) => {
+  if (!req.files || Object.keys(req.files).length === 0) {
+    return res.status(400).send('No files were uploaded.');
+  }
+
+  const pdfFile = req.files.file;
+  const id = req.body.id; // נקבל את ה-ID מהבקשה
+  const uploadPath = path.join(pdfDirectory, `${id}.pdf`);
+
+  pdfFile.mv(uploadPath, (err) => {
+    if (err) {
+      console.error('Error uploading PDF file:', err);
+      return res.status(500).send('Error uploading PDF file');
+    }
+
+    res.send('PDF file uploaded successfully');
+  });
 };

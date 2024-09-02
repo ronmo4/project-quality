@@ -176,9 +176,60 @@ td {
   box-shadow: 0 0 0 3px rgba(53, 122, 184, 0.5);
 }
 
+.input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.file-input,
+.search-input {
+  margin-bottom: 10px;
+  padding: 10px;
+  font-size: 16px;
+  width: 78%;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+
+.file-input:focus,
+.search-input:focus {
+  border-color: #4a90e2;
+}
+
+.file-input::file-selector-button {
+  background-color: #4a90e2;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+}
+
+.file-input::file-selector-button:hover {
+  background-color: #357ab8;
+}
+
+.file-input:disabled::file-selector-button {
+  background-color: #e0e0e0; /* צבע אפור כאשר הכפתור מושבת */
+  color: #a0a0a0; /* צבע טקסט אפור כאשר הכפתור מושבת */
+  cursor: not-allowed;
+}
+
+.search-input:disabled {
+  background-color: #e0e0e0; /* צבע אפור כאשר השדה מושבת */
+  cursor: not-allowed;
+}
+
 .button-container {
   display: flex;
-  gap: 20px;
   justify-content: center;
+  width: 100%;
   margin-top: 20px;
 }
