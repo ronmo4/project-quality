@@ -6,7 +6,8 @@ const { v4: uuidv4 } = require('uuid'); // ייבוא ספריית UUID ליצי
 // נתיב לקובץ Excel
 const excelFilePath = path.join(__dirname, 'public', 'Codes.xlsx');
 
-const pdfDirectory = 'AllCodes'; // שימוש בנתיב יחסי, או שתוכל להשתמש בנתיב מחושב שמבוסס על משתני סביבה
+// נתיב מלא לתיקיית שמירת קבצי ה-PDF
+const pdfDirectory = path.join(__dirname, 'public', 'AllCodes'); 
 
 // פונקציה לקריאת נתונים מקובץ Excel
 exports.getExcelData = (req, res) => {
@@ -70,9 +71,15 @@ exports.uploadPdf = (req, res) => {
   // יצירת שם ייחודי לקובץ PDF
   const uniqueFileName = `${id}-${uuidv4()}.pdf`;
 
-  // נתיב הקובץ לשמירה בספריה הנוכחית (או שתשנה ל-S3 / GCS וכו')
+  // נתיב הקובץ לשמירה בתיקייה הציבורית
   const uploadPath = path.join(pdfDirectory, uniqueFileName);
 
+  // בדיקה אם התיקייה קיימת, אם לא - יצירתה
+  if (!fs.existsSync(pdfDirectory)) {
+    fs.mkdirSync(pdfDirectory, { recursive: true });
+  }
+
+  // שמירת קובץ ה-PDF
   pdfFile.mv(uploadPath, (err) => {
     if (err) {
       console.error('Error uploading PDF file:', err);
@@ -82,3 +89,4 @@ exports.uploadPdf = (req, res) => {
     res.send('PDF file uploaded successfully');
   });
 };
+
