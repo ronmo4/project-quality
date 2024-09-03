@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AddForm from './AddForm';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // ייבוא הפונקציות הנדרשות מ-firebase/storage
+import { storage } from '../config/firebaseConfig';
 
 function PartB({ onAddRow, columns }) {
   const [data, setData] = useState([]); 
@@ -16,7 +18,10 @@ function PartB({ onAddRow, columns }) {
   const [sector, setSector] = useState('');
   const [ethicalValuesFilter, setEthicalValuesFilter] = useState([]);
   const [link, setLink] = useState('');
+  const [pdfFile, setPdfFile] = useState(null);
+  const [disableUpload, setDisableUpload] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // מצב טעינה חדש
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,6 +59,21 @@ function PartB({ onAddRow, columns }) {
       setShowAlert(true);
       return;
     }
+
+    setIsLoading(true); // התחלת טעינה
+
+    let fileLink = '';
+    if (pdfFile) {
+      const storageRef = ref(storage, `pdfs/${pdfFile.name}`); // יצירת reference לשמירת הקובץ ב-storage
+      try {
+        await uploadBytes(storageRef, pdfFile); // העלאת הקובץ
+        fileLink = await getDownloadURL(storageRef); // קבלת קישור השיתוף
+      } catch (error) {
+        console.error('Error uploading PDF to Firebase:', error);
+        setIsLoading(false); // סיום טעינה במקרה של שגיאה
+        return;
+      }
+    }
   
     const newRow = new Array(columns.length).fill('');
     newRow[1] = entityName;
@@ -62,8 +82,12 @@ function PartB({ onAddRow, columns }) {
     newRow[4] = year;
     newRow[5] = location;
     newRow[6] = region;
-    if (link) newRow.push(link);
-  
+    if (link) {
+      newRow.push(link);
+    } else if (fileLink) {
+      newRow.push(fileLink); // הוספת קישור ל-PDF שהועלה ל-Firebase Storage
+    }
+
     ethicalValuesFilter.forEach(value => {
       const columnIndex = columns.indexOf(value);
       if (columnIndex > -1) {
@@ -87,9 +111,22 @@ function PartB({ onAddRow, columns }) {
       resetForm();
     } catch (error) {
       console.error('Error updating Excel data:', error);
+    } finally {
+      setIsLoading(false); // סיום טעינה
     }
   };
-  
+
+  const handlePdfChange = (e) => {
+    setPdfFile(e.target.files[0]);
+    setLink(''); // איפוס שדה הקישור אם נבחר קובץ PDF
+    setDisableUpload(true); // חסימת שדה הקישור
+  };
+
+  const handleLinkChange = (e) => {
+    setLink(e.target.value);
+    setPdfFile(null); // איפוס שדה קובץ PDF אם הוזן קישור
+    setDisableUpload(false); // פתיחת שדה PDF
+  };
 
   const resetForm = () => {
     setEntityName('');
@@ -100,6 +137,8 @@ function PartB({ onAddRow, columns }) {
     setSector('');
     setEthicalValuesFilter([]);
     setLink('');
+    setPdfFile(null);
+    setDisableUpload(false);
   };
 
   return (
@@ -136,10 +175,28 @@ function PartB({ onAddRow, columns }) {
         type="text"
         placeholder="Add Link (optional)"
         value={link}
-        onChange={(e) => setLink(e.target.value)}
+        onChange={handleLinkChange}
         className="search-input"
+        disabled={disableUpload}
       />
-      <button onClick={handleAddNewRow} className="add-button">הוסף נתונים</button>
+      <input
+        type="file"
+        accept=".pdf"
+        onChange={handlePdfChange}
+        className="file-input"
+        disabled={disableUpload}
+      />
+      <button onClick={handleAddNewRow} className="add-button" disabled={isLoading}>
+        הוסף נתונים
+      </button>
+
+      {/* חלונית מודאלית לטעינה */}
+      {isLoading && (
+        <div className="loading-modal">
+          <div className="loading-spinner"></div>
+          <p>טוען...</p>
+        </div>
+      )}
     </div>
   );
 }
