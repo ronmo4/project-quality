@@ -15,7 +15,7 @@ function Table({ columns, data, handleRowClick }) {
           {data.map((row, rowIndex) => (
             <tr key={rowIndex} onClick={() => handleRowClick(row)}>
               {columns.map((col, colIndex) => (
-                <td key={colIndex}>{row[col] !== undefined ? row[col] : ''}</td>
+                <td key={colIndex}>{row[colIndex] !== undefined ? row[colIndex] : ''}</td>
               ))}
             </tr>
           ))}
